@@ -95,6 +95,7 @@ CJAICam::CJAICam(void)
 	m_isConnected	= false;
 	m_isActived		= false;
 	m_isColorConvert= false;
+	m_is3CCD		= false;
 
 	g_strErrorMsg	= _T("");
 	m_strIP			= _T("");
@@ -180,6 +181,7 @@ bool CJAICam::OnConnect(int idx, bool bColorConvert)
 
 	char IP[J_CAMERA_INFO_SIZE] = {0,};
 	char MAC[J_CAMERA_INFO_SIZE] = {0,};
+	char MODEL[J_CAMERA_INFO_SIZE] = {0,};
 	uint32_t nCameraInfoSize = J_CAMERA_INFO_SIZE;
 
 	status = J_Factory_GetCameraInfo(m_hFactory, (int8_t*)sCameraId, CAM_INFO_IP, IP, &nCameraInfoSize);
@@ -190,6 +192,14 @@ bool CJAICam::OnConnect(int idx, bool bColorConvert)
 	status = J_Factory_GetCameraInfo(m_hFactory, (int8_t*)sCameraId, CAM_INFO_MAC, MAC, &nCameraInfoSize);
 	if(status != J_ST_SUCCESS) { g_strErrorMsg = GetErrorMsg(status); return false; }
 	m_strMAC = (CString)MAC;
+
+	nCameraInfoSize = J_CAMERA_INFO_SIZE;
+	status = J_Factory_GetCameraInfo(m_hFactory, (int8_t*)sCameraId, CAM_INFO_MODELNAME, MODEL, &nCameraInfoSize);
+	if(status != J_ST_SUCCESS) { g_strErrorMsg = GetErrorMsg(status); return false; }
+	CString model = _T("");
+	model = (CString)MODEL; 
+
+	if (model.Find(_T("AT")) != -1) m_is3CCD = true;
 
 	//open the selected camera
 	status = J_Camera_Open(m_hFactory, (int8_t*)sCameraId, &m_hCamera);
@@ -301,7 +311,7 @@ bool CJAICam::OnStartAcquisition()
 
 void CJAICam::StreamCBFunc(J_tIMAGE_INFO * pAqImageInfo)
 {
-	if (m_isColorConvert == true)
+	if (m_isColorConvert == true || m_is3CCD == true) 
 	{
 		if(m_ImgColor.pImageBuffer != NULL)
 		{

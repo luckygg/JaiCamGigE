@@ -3,7 +3,7 @@
 //----------------------------------------------------------
 // Programmed by William Kim
 //----------------------------------------------------------
-// Last Update : 2016-11-11 17:27
+// Last Update : 2016-11-22 13:20
 // Modified by William Kim
 //----------------------------------------------------------
 
@@ -166,6 +166,7 @@ private:
 	bool m_isConnected;
 	bool m_isActived;
 	bool m_isColorConvert;
+	bool m_is3CCD;
 };
 
 #ifdef _UNICODE
