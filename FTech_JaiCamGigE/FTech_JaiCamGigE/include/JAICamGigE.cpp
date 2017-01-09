@@ -1,11 +1,12 @@
 #include "StdAfx.h"
 #include "JAICamGigE.h"
 
-StCameraInfo g_stCamInfo;
-CString g_strErrorMsg;
+using namespace JAI_GIGE;
+static StCameraInfo g_stCamInfo;
+static CString g_strErrorMsg;
 CString GetErrorMsg(J_STATUS_TYPE ErrCode);
 
-bool CJAICam::SearchAndGetDeviceCount(int &nValue)
+bool CJaiCamGigE::SearchAndGetDeviceCount(int &nValue)
 {
 	FACTORY_HANDLE	hFactory = NULL;
 	uint32_t iNumDev=0;
@@ -76,7 +77,47 @@ bool CJAICam::SearchAndGetDeviceCount(int &nValue)
 	return true;
 }
 
-CJAICam::CJAICam(void)
+CString CJaiCamGigE::GetDeviceModelName(int idx)
+{
+	if (idx >= g_stCamInfo.ModelName.GetCount()) 
+		return _T("Out of index.");
+	return g_stCamInfo.ModelName.GetAt(idx); 
+}
+
+CString CJaiCamGigE::GetDeviceSN(int idx) 
+{ 
+	if (idx >= g_stCamInfo.ModelName.GetCount()) 
+		return _T("Out of index.");
+	return g_stCamInfo.SN.GetAt(idx); 
+}
+
+CString CJaiCamGigE::GetDeviceDriverType(int idx) 
+{ 
+	if (idx >= g_stCamInfo.ModelName.GetCount()) 
+		return _T("Out of index.");
+	return g_stCamInfo.DriverType.GetAt(idx); 
+}
+
+CString CJaiCamGigE::GetDeviceIP(int idx) 
+{ 
+	if (idx >= g_stCamInfo.ModelName.GetCount()) 
+		return _T("Out of index.");
+	return g_stCamInfo.IP.GetAt(idx); 
+}
+
+CString CJaiCamGigE::GetDeviceMAC(int idx) 
+{ 
+	if (idx >= g_stCamInfo.ModelName.GetCount()) 
+		return _T("Out of index.");
+	return g_stCamInfo.MAC.GetAt(idx); 
+}
+
+CString CJaiCamGigE::GetLastErrorMessage() 
+{ 
+	return g_strErrorMsg; 
+}
+
+CJaiCamGigE::CJaiCamGigE(void)
 {
 	m_hFactory		= NULL;
 	m_hCamera		= NULL;
@@ -107,7 +148,7 @@ CJAICam::CJAICam(void)
 }
 
 
-CJAICam::~CJAICam(void)
+CJaiCamGigE::~CJaiCamGigE(void)
 {
 	CloseFactory();
 
@@ -130,7 +171,7 @@ CJAICam::~CJAICam(void)
 	}
 }
 
-bool CJAICam::OpenFactory()
+bool CJaiCamGigE::OpenFactory()
 {
 	J_STATUS_TYPE status = J_ST_SUCCESS;
 
@@ -144,7 +185,7 @@ bool CJAICam::OpenFactory()
 	return true;
 }
 
-bool CJAICam::CloseFactory()
+bool CJaiCamGigE::CloseFactory()
 {
 	J_STATUS_TYPE status = J_ST_SUCCESS;
 
@@ -163,7 +204,7 @@ bool CJAICam::CloseFactory()
 	return true;
 }
 
-bool CJAICam::OnConnect(int idx, bool bColorConvert)
+bool CJaiCamGigE::OnConnect(int idx, bool bColorConvert)
 {
 	J_STATUS_TYPE	status = J_ST_SUCCESS;
 	uint32_t		iCameraIdSize = J_CAMERA_ID_SIZE;
@@ -234,7 +275,7 @@ bool CJAICam::OnConnect(int idx, bool bColorConvert)
 	m_nBpp = J_BitsPerPixel(int64Val);
 
 	m_isColorConvert = bColorConvert;
-	m_isColorConvert ? m_nBpp *= 3 : m_nBpp;
+	m_isColorConvert && (m_nBpp == 8)? m_nBpp *= 3 : m_nBpp;
 
 	m_pbyBuffer = new BYTE[m_nWidth * m_nHeight * m_nBpp / 8];
 	memset(m_pbyBuffer, 0, m_nWidth * m_nHeight * m_nBpp / 8);
@@ -245,7 +286,7 @@ bool CJAICam::OnConnect(int idx, bool bColorConvert)
 	return TRUE;
 }
 
-bool CJAICam::OnDisconnect()
+bool CJaiCamGigE::OnDisconnect()
 {
 	J_STATUS_TYPE status = J_ST_SUCCESS;
 
@@ -286,11 +327,11 @@ bool CJAICam::OnDisconnect()
 	return TRUE;
 }
 
-bool CJAICam::OnStartAcquisition()
+bool CJaiCamGigE::OnStartAcquisition()
 {
 	J_STATUS_TYPE status = J_ST_SUCCESS;
 
-	status = J_Image_OpenStream(m_hCamera, 0, reinterpret_cast<J_IMG_CALLBACK_OBJECT>(this), reinterpret_cast<J_IMG_CALLBACK_FUNCTION>(&CJAICam::StreamCBFunc), &m_hThread, (m_nWidth*m_nHeight*m_nBpp)/8);
+	status = J_Image_OpenStream(m_hCamera, 0, reinterpret_cast<J_IMG_CALLBACK_OBJECT>(this), reinterpret_cast<J_IMG_CALLBACK_FUNCTION>(&CJaiCamGigE::StreamCBFunc), &m_hThread, (m_nWidth*m_nHeight*m_nBpp)/8);
 	if(status != J_ST_SUCCESS)
 	{
 		g_strErrorMsg = GetErrorMsg(status);
@@ -309,7 +350,7 @@ bool CJAICam::OnStartAcquisition()
 	return true;
 }
 
-void CJAICam::StreamCBFunc(J_tIMAGE_INFO * pAqImageInfo)
+void CJaiCamGigE::StreamCBFunc(J_tIMAGE_INFO * pAqImageInfo)
 {
 	if (m_isColorConvert == true || m_is3CCD == true) 
 	{
@@ -337,7 +378,7 @@ void CJAICam::StreamCBFunc(J_tIMAGE_INFO * pAqImageInfo)
 	SetEvent(m_hGrabDone);
 }
 
-bool CJAICam::OnStopAcquisition()
+bool CJaiCamGigE::OnStopAcquisition()
 {
 	J_STATUS_TYPE status = J_ST_SUCCESS;
 
@@ -371,7 +412,7 @@ bool CJAICam::OnStopAcquisition()
 }
 
 
-bool CJAICam::SetHardTriggerMode()
+bool CJaiCamGigE::SetHardTriggerMode()
 {
 	J_STATUS_TYPE status = J_ST_SUCCESS;
 	
@@ -406,7 +447,7 @@ bool CJAICam::SetHardTriggerMode()
 	return true;
 }
 
-bool CJAICam::SetSoftTriggerMode()
+bool CJaiCamGigE::SetSoftTriggerMode()
 {
 	J_STATUS_TYPE status = J_ST_SUCCESS;
 
@@ -448,7 +489,7 @@ bool CJAICam::SetSoftTriggerMode()
 	return true;
 }
 
-bool CJAICam::SetContinuousMode()
+bool CJaiCamGigE::SetContinuousMode()
 {
 	J_STATUS_TYPE status = J_ST_SUCCESS;
 
@@ -475,7 +516,7 @@ bool CJAICam::SetContinuousMode()
 	return true;
 }
 
-bool CJAICam::OnTriggerEvent()
+bool CJaiCamGigE::OnTriggerEvent()
 {
 	J_STATUS_TYPE status = J_ST_SUCCESS;
 
@@ -501,7 +542,7 @@ bool CJAICam::OnTriggerEvent()
 	return true;
 }
 
-bool CJAICam::OnCalculateWhiteBalance()
+bool CJaiCamGigE::OnCalculateWhiteBalance()
 {
 	J_STATUS_TYPE	status = J_ST_SUCCESS;
 	J_tBGR48		resultcolor;
@@ -544,7 +585,7 @@ bool CJAICam::OnCalculateWhiteBalance()
 	return true;
 }
 
-bool CJAICam::OnSaveImage(CString strPath)
+bool CJaiCamGigE::OnSaveImage(CString strPath)
 {
 	if (strPath.IsEmpty()) return false;
 
@@ -612,7 +653,7 @@ CString GetErrorMsg(J_STATUS_TYPE ErrCode)
 	return strErrMsg;
 }
 
-void CJAICam::OnCreateBmpInfo(int nWidth, int nHeight, int nBpp)
+void CJaiCamGigE::OnCreateBmpInfo(int nWidth, int nHeight, int nBpp)
 {
 	if (m_pBitmapInfo != NULL)
 	{
@@ -655,7 +696,7 @@ void CJAICam::OnCreateBmpInfo(int nWidth, int nHeight, int nBpp)
 	m_pBitmapInfo->bmiHeader.biHeight = -nHeight;
 }
 
-bool CJAICam::SetUserSetSelector(USER User)
+bool CJaiCamGigE::SetUserSetSelector(USER User)
 {
 	if(m_hCamera == NULL)
 	{
@@ -676,102 +717,102 @@ bool CJAICam::SetUserSetSelector(USER User)
 	return SetValueString((int8_t*)"UserSetSelector", (CString)value);
 }
 
-bool CJAICam::OnUserSetSave()
+bool CJaiCamGigE::OnUserSetSave()
 {
 	return OnExecuteCommand((int8_t*)"UserSetSave");
 }
 
-bool CJAICam::OnUserSetLoad()
+bool CJaiCamGigE::OnUserSetLoad()
 {
 	return OnExecuteCommand((int8_t*)"UserSetLoad");
 }
 
-bool CJAICam::GetDeviceUserID(CString &strValue)
+bool CJaiCamGigE::GetDeviceUserID(CString &strValue)
 {
 	return GetValueString((int8_t*)"DeviceUserID", strValue);
 }
 
-bool CJAICam::SetDeviceUserID(CString strValue)
+bool CJaiCamGigE::SetDeviceUserID(CString strValue)
 {
 	return SetValueString((int8_t*)"DeviceUserID", strValue);
 }
 
-bool CJAICam::GetDeviceModelName(CString &strValue)
+bool CJaiCamGigE::GetDeviceModelName(CString &strValue)
 {
 	return GetValueString((int8_t*)"DeviceModelName", strValue);
 }
 
-bool CJAICam::GetSerialNumber(CString &strValue)
+bool CJaiCamGigE::GetSerialNumber(CString &strValue)
 {
 	return GetValueString((int8_t*)"DeviceID", strValue);
 }
 
-bool CJAICam::GetOffsetX(int &nValue)
+bool CJaiCamGigE::GetOffsetX(int &nValue)
 {
 	return GetValueInt((int8_t*)"OffsetX", nValue);
 }
 
-bool CJAICam::GetOffsetY(int &nValue)
+bool CJaiCamGigE::GetOffsetY(int &nValue)
 {
 	return GetValueInt((int8_t*)"OffsetY", nValue);
 }
 
-bool CJAICam::GetAcquisitionMode(CString &strValue)
+bool CJaiCamGigE::GetAcquisitionMode(CString &strValue)
 {
 	return GetValueString((int8_t*)"AcquisitionMode", strValue);
 }
 
-bool CJAICam::GetAcquisitionFrameRate(double &dValue)
+bool CJaiCamGigE::GetAcquisitionFrameRate(double &dValue)
 {
 	return GetValueDouble((int8_t*)"AcquisitionFrameRate", dValue);
 }
 
-bool CJAICam::GetTriggerMode(CString &strValue)
+bool CJaiCamGigE::GetTriggerMode(CString &strValue)
 {
 	return GetValueString((int8_t*)"TriggerMode", strValue);
 }
 
-bool CJAICam::GetTriggerSource(CString &strValue)
+bool CJaiCamGigE::GetTriggerSource(CString &strValue)
 {
 	return GetValueString((int8_t*)"TriggerSource", strValue);
 }
 
-bool CJAICam::GetExposureMode(CString &strValue)
+bool CJaiCamGigE::GetExposureMode(CString &strValue)
 {
 	return GetValueString((int8_t*)"ExposureMode", strValue);
 }
 
-bool CJAICam::GetExposureTimeRaw(int &nValue)
+bool CJaiCamGigE::GetExposureTimeRaw(int &nValue)
 {
 	return GetValueInt((int8_t*)"ExposureTimeRaw", nValue);
 }
 
-bool CJAICam::GetPixelFormat(CString &strValue)
+bool CJaiCamGigE::GetPixelFormat(CString &strValue)
 {
 	return GetValueString((int8_t*)"PixelFormat", strValue);
 }
 
-bool CJAICam::SetOffsetX(int nValue)
+bool CJaiCamGigE::SetOffsetX(int nValue)
 {
 	return SetValueInt((int8_t*)"OffsetX", nValue);
 }
 
-bool CJAICam::SetOffsetY(int nValue)
+bool CJaiCamGigE::SetOffsetY(int nValue)
 {
 	return SetValueInt((int8_t*)"OffsetY", nValue);
 }
 
-bool CJAICam::SetAcquisitionFrameRate(double dValue)
+bool CJaiCamGigE::SetAcquisitionFrameRate(double dValue)
 {
 	return SetValueDouble((int8_t*)"AcquisitionFrameRate", dValue);
 }
 
-bool CJAICam::SetAcquisitionMode(CString strValue)
+bool CJaiCamGigE::SetAcquisitionMode(CString strValue)
 {
 	return SetValueString((int8_t*)"AcquisitionMode", strValue);
 }
 
-bool CJAICam::SetTriggerMode(TRGMODE Mode)
+bool CJaiCamGigE::SetTriggerMode(TRGMODE Mode)
 {
 	char value[MAX_PATH] = {0,};
 	switch(Mode)
@@ -782,7 +823,7 @@ bool CJAICam::SetTriggerMode(TRGMODE Mode)
 	return SetValueString((int8_t*)"TriggerMode", CString(value));
 }
 
-bool CJAICam::SetTriggerSource(TRGSRC Src)
+bool CJaiCamGigE::SetTriggerSource(TRGSRC Src)
 {
 	char value[MAX_PATH] = {0,};
 	switch(Src)
@@ -807,7 +848,7 @@ bool CJAICam::SetTriggerSource(TRGSRC Src)
 	return SetValueString((int8_t*)"TriggerSource", CString(value));
 }
 
-bool CJAICam::SetExposureMode(EXPMODE Mode)
+bool CJaiCamGigE::SetExposureMode(EXPMODE Mode)
 {
 	char value[MAX_PATH] = {0,};
 	switch(Mode)
@@ -818,12 +859,12 @@ bool CJAICam::SetExposureMode(EXPMODE Mode)
 	return SetValueString((int8_t*)"ExposureMode", CString(value));
 }
 
-bool CJAICam::SetExposureTime(int nValue)
+bool CJaiCamGigE::SetExposureTime(int nValue)
 {
 	return SetValueInt((int8_t*)"ExposureTimeRaw", nValue);
 }
 
-bool CJAICam::GetValueString(int8_t* pNodeName, CString &strValue)
+bool CJaiCamGigE::GetValueString(int8_t* pNodeName, CString &strValue)
 {
 	if(m_hCamera == NULL)
 	{
@@ -847,7 +888,7 @@ bool CJAICam::GetValueString(int8_t* pNodeName, CString &strValue)
 	return true;
 }
 
-bool CJAICam::SetValueString(int8_t* pNodeName, CString strValue)
+bool CJaiCamGigE::SetValueString(int8_t* pNodeName, CString strValue)
 {
 	if(m_hCamera == NULL)
 	{
@@ -870,7 +911,7 @@ bool CJAICam::SetValueString(int8_t* pNodeName, CString strValue)
 	return true;
 }
 
-bool CJAICam::GetValueInt(int8_t* pNodeName, int &nValue)
+bool CJaiCamGigE::GetValueInt(int8_t* pNodeName, int &nValue)
 {
 	if(m_hCamera == NULL)
 	{
@@ -892,7 +933,7 @@ bool CJAICam::GetValueInt(int8_t* pNodeName, int &nValue)
 	return true;
 }
 
-bool CJAICam::SetValueInt(int8_t* pNodeName, int nValue)
+bool CJaiCamGigE::SetValueInt(int8_t* pNodeName, int nValue)
 {
 	if(m_hCamera == NULL)
 	{
@@ -912,7 +953,7 @@ bool CJAICam::SetValueInt(int8_t* pNodeName, int nValue)
 	return true;
 }
 
-bool CJAICam::GetValueDouble(int8_t* pNodeName, double &dValue)
+bool CJaiCamGigE::GetValueDouble(int8_t* pNodeName, double &dValue)
 {
 	if(m_hCamera == NULL)
 	{
@@ -934,7 +975,7 @@ bool CJAICam::GetValueDouble(int8_t* pNodeName, double &dValue)
 	return true;
 }
 
-bool CJAICam::SetValueDouble(int8_t* pNodeName, double dValue)
+bool CJaiCamGigE::SetValueDouble(int8_t* pNodeName, double dValue)
 {
 	if(m_hCamera == NULL)
 	{
@@ -954,7 +995,7 @@ bool CJAICam::SetValueDouble(int8_t* pNodeName, double dValue)
 	return true;
 }
 
-bool CJAICam::OnExecuteCommand(int8_t* pNodeName)
+bool CJaiCamGigE::OnExecuteCommand(int8_t* pNodeName)
 {
 	if(m_hCamera == NULL)
 	{

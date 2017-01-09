@@ -26,7 +26,10 @@ UINT DisplayThread(LPVOID param)
 
 		dwResult = WaitForSingleObject(pMain->m_Camera.GetHandleGrabDone(),1000);
 		if (dwResult == WAIT_OBJECT_0)
+		{
 			pMain->OnDisplay();
+			pMain->m_Camera.ResetEventGrabDone();
+		}
 	}
 
 	return 0;
@@ -314,23 +317,23 @@ void CFTech_JaiCamGigEDlg::OnBnClickedBtnRefresh()
 
 	int nDevices=0;
 	bool ret=false;
-	ret = CJAICam::SearchAndGetDeviceCount(nDevices);
-	if (ret != true) { AfxMessageBox(CJAICam::GetLastErrorMessage()); return; }
+	ret = JAI_GIGE::CJaiCamGigE::SearchAndGetDeviceCount(nDevices);
+	if (ret != true) { AfxMessageBox(JAI_GIGE::CJaiCamGigE::GetLastErrorMessage()); return; }
 
 	for (int i=0; i<nDevices; i++)
 	{
 		CString Device=_T("");
 		CString ModelName=_T("");
-		ModelName = CJAICam::GetDeviceModelName(i);
+		ModelName = JAI_GIGE::CJaiCamGigE::GetDeviceModelName(i);
 
 		CString IP=_T("");
-		IP = CJAICam::GetDeviceIP(i);
+		IP = JAI_GIGE::CJaiCamGigE::GetDeviceIP(i);
 
 		CString DriverType=_T("");
-		DriverType = CJAICam::GetDeviceDriverType(i);
+		DriverType = JAI_GIGE::CJaiCamGigE::GetDeviceDriverType(i);
 
 		CString SN=_T("");
-		SN = CJAICam::GetDeviceSN(i);
+		SN = JAI_GIGE::CJaiCamGigE::GetDeviceSN(i);
 
 		Device.Format(_T("%s (%s) - %s , %s"), ModelName,SN,IP,DriverType);
 		pLB->AddString(Device);

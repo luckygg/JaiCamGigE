@@ -20,7 +20,7 @@ public:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 
 public :
-	CJAICam m_Camera;
+	JAI_GIGE::CJaiCamGigE m_Camera;
 	int m_nWidth;
 	int m_nHeight;
 	int m_nBpp;

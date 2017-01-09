@@ -3,7 +3,7 @@
 //----------------------------------------------------------
 // Programmed by William Kim
 //----------------------------------------------------------
-// Last Update : 2016-11-22 13:20
+// Last Update : 2017-01-09 15:36
 // Modified by William Kim
 //----------------------------------------------------------
 
@@ -12,6 +12,7 @@
 #include <Jai_Factory.h>
 #pragma comment (lib,"Jai_Factory")
 
+namespace JAI_GIGE {
 
 //----- enum type -----//
 enum USER {USER_Default=0, USER_UserSet1, USER_UserSet2, USER_UserSet3};
@@ -37,17 +38,23 @@ typedef struct StCameraInfo
 	}
 }StCameraInfo;
 
-extern StCameraInfo g_stCamInfo;
-extern CString g_strErrorMsg;
-class CJAICam
+//extern StCameraInfo g_stCamInfo;
+//extern CString g_strErrorMsg;
+class CJaiCamGigE
 {
 public:
-	CJAICam(void);
-	~CJAICam(void);
+	CJaiCamGigE(void);
+	~CJaiCamGigE(void);
 
 	static bool SearchAndGetDeviceCount(int &nValue);
-	
-	static CString GetDeviceModelName(int idx) { 
+
+	static CString GetDeviceModelName(int idx);
+	static CString GetDeviceSN(int idx);
+	static CString GetDeviceDriverType(int idx);
+	static CString GetDeviceIP(int idx);
+	static CString GetDeviceMAC(int idx);
+	static CString GetLastErrorMessage();
+	/*static CString GetDeviceModelName(int idx) { 
 		if (idx >= g_stCamInfo.ModelName.GetCount()) 
 			return _T("Out of index.");
 		return g_stCamInfo.ModelName.GetAt(idx); }
@@ -66,8 +73,8 @@ public:
 	static CString GetDeviceMAC(int idx) { 
 		if (idx >= g_stCamInfo.ModelName.GetCount()) 
 			return _T("Out of index.");
-		return g_stCamInfo.MAC.GetAt(idx); }
-	static CString GetLastErrorMessage() { return g_strErrorMsg; }
+		return g_stCamInfo.MAC.GetAt(idx); }*/
+	/*static CString GetLastErrorMessage() { return g_strErrorMsg; }*/
 
 	//----- 연결 및 해제 -----//
 	bool OnConnect(int idx, bool bColorConvert=false);
@@ -190,3 +197,4 @@ static bool CStringToChar(CString strIn, char* pchOut)
 }
 
 #endif
+}
